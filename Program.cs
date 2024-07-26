@@ -9,18 +9,27 @@ using System.Text.Encodings.Web;
 using System.Security.Cryptography;
 using System.Text;
 using System.Net.Sockets;
+using System;
+using System.Net.NetworkInformation;
+
 namespace GrassIPTV
 {
     internal class Program
     {
+        private static Process currentMpvProcess = null;
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            #region 判断系统部分
             string sys;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Console.WriteLine("当前环境是windows");
                 sys = "win";
+               
+                Console.WriteLine("当前环境是windows");
+                
                 Run.RunCommand("winget install mpv --accept-source-agreements --silent --accept-package-agreements", sys);
+                
 
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
@@ -34,6 +43,9 @@ namespace GrassIPTV
                 Console.WriteLine("未知环境 程序退出");
                 return;
             }
+            #endregion
+
+            #region 获取列表
             string Vision = "0.0.1";
             Console.WriteLine("启动IPTV主程序");
             Console.WriteLine("版本:" + Vision);
@@ -68,7 +80,7 @@ namespace GrassIPTV
             // 下载文件
 
 
-            
+
             // 解析m3u文件
             var lines = File.ReadAllLines(localPath);
             var channels = new List<Dictionary<string, string>>();
@@ -95,24 +107,28 @@ namespace GrassIPTV
             var json = JsonSerializer.Serialize(channels, options);
             //解析本地IP
             string localIpAddress = GetLocalIPAddress().ToString();
-            Console.WriteLine("本机地址:"+localIpAddress);
+            Console.WriteLine("本机地址:" + localIpAddress);
             // 输出json到文件
             string list = "html/list.json";
             File.WriteAllText(list, json);
+            #endregion
 
+            #region 启动监听
             HttpListener listener = new HttpListener();
             string urls = $"http://{localIpAddress}:2545/";
-            
+
             listener.Prefixes.Add(urls);
             Console.WriteLine("开始监听");
             Console.WriteLine(urls);
             listener.Start();
-
+            #endregion
             while (true)
             {
                 HttpListenerContext context = listener.GetContext();
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
+
+                #region 获取后端机IP
                 if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/ip")
                 {
                     // 返回IP地址
@@ -121,6 +137,9 @@ namespace GrassIPTV
                     Stream output = response.OutputStream;
                     output.Write(buffer, 0, buffer.Length);
                 }
+                #endregion
+
+                # region 频道接口
                 if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/get-channel-info")
                 {
                     // 读取你的 JSON 文件
@@ -130,8 +149,11 @@ namespace GrassIPTV
                     response.ContentLength64 = buffer.Length;
                     Stream output = response.OutputStream;
                     output.Write(buffer, 0, buffer.Length);
-                    //output.Close();
+                    output.Close();
                 }
+                #endregion
+
+                #region HTML主页面
                 if (request.HttpMethod == "GET" && request.Url.AbsolutePath == "/")
                 {
                     // 读取你的 HTML 文件
@@ -141,8 +163,11 @@ namespace GrassIPTV
                     response.ContentLength64 = buffer.Length;
                     Stream output = response.OutputStream;
                     output.Write(buffer, 0, buffer.Length);
-                   //output.Close();
+                    output.Close();
                 }
+                #endregion
+
+                #region CSS页面
                 if (request.HttpMethod == "GET" && request.Url.AbsolutePath.EndsWith(".css"))
                 {
                     // 获取 CSS 文件的路径
@@ -159,16 +184,19 @@ namespace GrassIPTV
                         response.ContentLength64 = buffer.Length;
                         Stream output = response.OutputStream;
                         output.Write(buffer, 0, buffer.Length);
-                        //output.Close();
+                        output.Close();
                     }
                     else
                     {
                         // 如果 CSS 文件不存在，返回 404 错误
                         response.StatusCode = 404;
-                        //response.Close();
+                        response.Close();
                     }
-                
+
                 }
+                #endregion
+
+                #region 频道json
                 if (request.HttpMethod == "POST" && request.Url.AbsolutePath == "/get-channel-name")
                 {
                     // 读取请求的正文
@@ -195,21 +223,47 @@ namespace GrassIPTV
                         }
                     }
 
+
                     // 输出频道 URL
                     if (channelUrl != null)
                     {
                         Console.WriteLine(channelUrl);
-                        Run.RunCommand("mpv " + channelUrl,sys);
+                        // 如果当前有正在运行的mpv进程，结束它
+                        if (currentMpvProcess != null)
+                        {
+                            if (!currentMpvProcess.HasExited)
+                            {
+                                // 使用命令行工具结束mpv进程
+                                if (sys == "linux")
+                                {
+                                    Run.RunCommand("pkill mpv", sys);
+                                }
+                                else if (sys == "win")
+                                {
+                                    Run.RunCommand("taskkill /IM mpv.exe /F", sys);
+                                }
+                                System.Threading.Thread.Sleep(1000); // 等待1秒
+                            }
+                            currentMpvProcess = null;
+                        }
+                        // 启动新的mpv进程
+                        currentMpvProcess = Run.RunCommand("mpv " + channelUrl, sys);
                     }
                     else
                     {
                         Console.WriteLine("频道未找到: " + channelName);
                     }
 
+
+
+
                     // 返回一个空的响应
                     response.StatusCode = 200;
-                    //response.Close();
+                    response.Close();
                 }
+                #endregion
+
+                #region OPTIONS处理
                 if (request.HttpMethod == "OPTIONS")
                 {
                     // 添加 CORS 头
@@ -219,24 +273,41 @@ namespace GrassIPTV
                     response.StatusCode = 200;
                     response.Close();
                 }
-
+                #endregion
 
 
             }
 
         }
+
+        #region 静态模块:获取本地IP地址
         static string GetLocalIPAddress()
         {
-            var host = Dns.GetHostEntry(Dns.GetHostName());
-            foreach (var ip in host.AddressList)
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
             {
-                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                if (ni.NetworkInterfaceType != NetworkInterfaceType.Wireless80211 &&
+                    ni.NetworkInterfaceType != NetworkInterfaceType.Ethernet)
                 {
-                    return ip.ToString();
+                    continue;
+                }
+
+                if (ni.OperationalStatus != OperationalStatus.Up)
+                {
+                    continue;
+                }
+
+                foreach (var ip in ni.GetIPProperties().UnicastAddresses)
+                {
+                    if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                    {
+                        return ip.Address.ToString();
+                    }
                 }
             }
-            throw new Exception("No network adapters with an IPv4 address in the system!");
-        }
 
+            throw new Exception("No network adapters with an IPv4 address in the system!");
+            #endregion
+
+        }
     }
 }
