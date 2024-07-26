@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GrassIPTV", "GrassIPTV.csproj", "{8793A845-7D69-40A8-9929-92AF3601544B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		J1800|Any CPU = J1800|Any CPU
+		J1800|x64 = J1800|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Debug|x64.ActiveCfg = Debug|x64
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Debug|x64.Build.0 = Debug|x64
+		{8793A845-7D69-40A8-9929-92AF3601544B}.J1800|Any CPU.ActiveCfg = J1800|Any CPU
+		{8793A845-7D69-40A8-9929-92AF3601544B}.J1800|Any CPU.Build.0 = J1800|Any CPU
+		{8793A845-7D69-40A8-9929-92AF3601544B}.J1800|x64.ActiveCfg = J1800|x64
+		{8793A845-7D69-40A8-9929-92AF3601544B}.J1800|x64.Build.0 = J1800|x64
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Release|x64.ActiveCfg = Release|x64
+		{8793A845-7D69-40A8-9929-92AF3601544B}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0DB82A08-9B0E-4BCA-9F4F-CAF90BD84F34}
+	EndGlobalSection
+EndGlobal

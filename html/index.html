@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GrassIPTV选台</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+
+        // 获取服务器IP地址
+        fetch('/ip')
+            .then(response => response.text())
+            .then(serverIp => {
+
+                // 使用服务器IP地址替换原来的localhost和127.0.0.1
+                fetch(`http://${serverIp}:2545/get-channel-info`, {
+                    method: 'POST',
+                })
+
+                    .then(response => response.json())
+                    .then(data => {
+                        // 处理返回的数据
+                        const channelContainer = document.getElementById('channelContainer'); // 获取channelContainer的引用
+                        data.forEach(item => {
+                            const channelName = Object.keys(item)[0];
+                            const button = document.createElement('button');
+                            button.textContent = channelName;
+                            button.onclick = function () {
+                                fetch(`http://${serverIp}:2545/get-channel-name`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({ channelName: channelName })
+                                });
+                            };
+
+                            channelContainer.appendChild(button); // 将按钮添加到channelContainer中
+                        });
+                    });
+            });
+    </script>
+
+</head>
+
+<body>
+    <div class="flex-container" id="channelContainer">
+
+
+    </div>
+</body>
+
+</html>
