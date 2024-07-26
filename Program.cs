@@ -46,7 +46,7 @@ namespace GrassIPTV
             #endregion
 
             #region 获取列表
-            string Vision = "0.0.1";
+            string Vision = "Alpha0.0.2";
             Console.WriteLine("启动IPTV主程序");
             Console.WriteLine("版本:" + Vision);
             //获取当前播放列表
